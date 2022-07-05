@@ -1,11 +1,9 @@
-import React from "react"
+import React, { useState } from "react"
 import { StyleSheet, View, Text, SafeAreaView } from "react-native"
 import Btn from "../components/Btn"
 
 
-
 const Home = ({ navigation }: any) => {
-
 
     return (
         <SafeAreaView style={styles.container}>

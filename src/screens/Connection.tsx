@@ -24,13 +24,11 @@ const Connection = ({ navigation }: any) => {
                 validationSchema={validationSchema}
                 initialValues={{ email: "", password: "" }}
                 onSubmit={values => {
-                    console.log(values)
-
                     auth()
                         .signInWithEmailAndPassword(values.email, values.password)
-                        .then(() => {
+                        .then((userAuth) => {
                             console.log("User signed in !")
-                            navigation.navigate("UserHome", { email: values.email })
+                            navigation.navigate("UserHome", { email: values.email, user: userAuth.user.uid })
                         })
                         .catch(error => {
                             if (error.code === "auth/invalid-email") {
@@ -71,7 +69,6 @@ const Connection = ({ navigation }: any) => {
             </Formik>
         </View>
     )
-
 }
 
 const styles = StyleSheet.create({

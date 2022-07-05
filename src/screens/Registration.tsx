@@ -28,7 +28,6 @@ const Registration = ({ navigation }: any) => {
                 validationSchema={validationSchema}
                 initialValues={{ email: "", password: "", passwordConfirm: "" }}
                 onSubmit={values => {
-                    console.log(values)
 
                     auth()
                         .createUserWithEmailAndPassword(values.email, values.password)
