@@ -1,14 +1,20 @@
 import React, { useEffect, useState } from "react"
-import { StyleSheet, View, Text, SafeAreaView, Modal, TouchableOpacity, FlatList } from "react-native"
+import { StyleSheet, View, Text, SafeAreaView, Modal, FlatList, ScrollView } from "react-native"
 import Btn from "../components/Btn"
 import auth from "@react-native-firebase/auth"
 import firestore from "@react-native-firebase/firestore"
 import Input from "../components/Input"
 import { Formik } from "formik"
+import type { NativeStackScreenProps } from "@react-navigation/native-stack"
+import { RootStackParamList } from "../../App"
+import renderItem from "../components/Card"
 
 
 
-export interface TData {
+
+type UserHomeProps = NativeStackScreenProps<RootStackParamList, "UserHome">
+
+export type DataType = {
     userId: string
     login: string
     name: string
@@ -17,23 +23,21 @@ export interface TData {
 }
 
 
-const UserHome = ({ navigation, route }: any) => {
+const UserHome: React.FunctionComponent<UserHomeProps> = ({ navigation, route }) => {
     const { email, user } = route.params
     const db = firestore().collection("data")
 
     const [modalVisible, setModalVisible] = useState(false)
-    const [initializing, setInitializing] = useState(true)
     const [userId, setUserId] = useState()
-    const [data, setData] = useState<any>()
-
+    const [data, setData] = useState<DataType[]>()
 
     db.get()
         .then(querySnapshot => {
 
-            let items: TData[] = []
-            querySnapshot.forEach((snapshot: any) => {
+            let items: DataType[] = []
+            querySnapshot.forEach((snapshot) => {
 
-                items.push(snapshot.data())
+                items.push(snapshot.data() as DataType)
             })
             setData(items)
 
@@ -42,41 +46,12 @@ const UserHome = ({ navigation, route }: any) => {
 
     function onAuthStateChanged(user: any) {
         user ? setUserId(user.uid) : null
-        if (initializing) setInitializing(false)
     }
 
-    // useEffect(() => {
-    //     const subscriber = auth().onAuthStateChanged(onAuthStateChanged)
-    //     return subscriber; // unsubscribe on unmount
-    // }, [])
+    useEffect(() => {
+        auth().onAuthStateChanged(onAuthStateChanged)
+    }, [])
 
-    // if (initializing) return null
-
-    // if (!userId) return navigation.navigate("Connection")
-
-    const renderItem = ({ item }: any) => {
-        // if (item.userId == user) {
-        return (
-
-            <TouchableOpacity style={styles.data}>
-                <View style={{ flexDirection: "row" }}>
-                    <Text style={styles.dataText}>Nom: </Text><Text style={{ color: "black" }}>{item.name}</Text>
-                </View>
-                <View style={{ flexDirection: "row" }}>
-                    <Text style={styles.dataText}>Login: </Text><Text style={{ color: "black" }}>{item.login}</Text>
-                </View>
-                <View style={{ flexDirection: "row" }}>
-                    <Text style={styles.dataText}>Mots de passe: </Text><Text style={{ color: "black" }}>{item.password}</Text>
-                </View>
-                <View style={{ flexDirection: "row" }}>
-                    <Text style={styles.dataText}>Type: </Text><Text style={{ color: "black" }}>{item.type}</Text>
-                </View>
-            </TouchableOpacity>
-        )
-        // }
-        // return <></>
-
-    }
 
     return (
         <SafeAreaView style={styles.container}>
@@ -97,7 +72,7 @@ const UserHome = ({ navigation, route }: any) => {
                     <View>
                         <Modal visible={modalVisible} animationType="slide">
                             <Text style={styles.text}> Nouvel enregistrement</Text>
-                            <View style={styles.inputContainer}>
+                            <ScrollView style={styles.inputContainer}>
                                 <Input
                                     label="Nom"
                                     placeholder="Entrez le nom de l'application"
@@ -129,7 +104,7 @@ const UserHome = ({ navigation, route }: any) => {
                                     onChangeText={handleChange("type")}
                                     onBlur={() => handleBlur("type")}
                                     error={errors.type} />
-                            </View>
+                            </ScrollView>
 
                             <View style={styles.btnContainer}>
                                 <View style={styles.register}>
@@ -161,7 +136,8 @@ const UserHome = ({ navigation, route }: any) => {
                         </View>
                         <View style={styles.datasContainer}>
                             <FlatList
-                                data={data.filter((e: any) => e.userId == user)}
+                                style={styles.listStyle}
+                                data={data ? data.filter((item: DataType) => item.userId == user) : null}
                                 keyExtractor={item => item.name}
                                 renderItem={renderItem}
                                 ItemSeparatorComponent={() => <View style={styles.separator} />}
@@ -183,12 +159,15 @@ const styles = StyleSheet.create({
         alignItems: "center"
     },
 
+    listStyle: {
+        width: "90"
+    },
+
     inputContainer: {
         flex: 2,
         marginTop: 20,
         paddingHorizontal: 20
     },
-
 
     text: {
         color: "black",
@@ -246,16 +225,6 @@ const styles = StyleSheet.create({
         borderWidth: 2,
         marginTop: 5,
         borderColor: "gray"
-    },
-
-    dataText: {
-        color: "black",
-        fontWeight: "bold"
-    },
-
-    data: {
-        marginVertical: 10,
-
     }
 })
 

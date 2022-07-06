@@ -5,6 +5,9 @@ import { SafeAreaView, StyleSheet, View } from "react-native"
 import auth from "@react-native-firebase/auth"
 import * as yup from "yup"
 import { Formik } from "formik"
+import type { NativeStackNavigationProp } from "@react-navigation/native-stack"
+import { RootStackParamList } from "../../App"
+
 
 
 
@@ -18,9 +21,9 @@ const validationSchema = yup.object().shape({
     passwordConfirm: yup.string().required().oneOf([yup.ref("password"), null], "Les mots de passe ne correspondent pas")
 })
 
+type RegistrationNavigationProp = { navigation: NativeStackNavigationProp<RootStackParamList, "Registration"> }
 
-
-const Registration = ({ navigation }: any) => {
+const Registration: React.FunctionComponent<RegistrationNavigationProp> = ({ navigation }) => {
 
     return (
         <SafeAreaView style={styles.container}>

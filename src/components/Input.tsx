@@ -4,8 +4,8 @@ import Icon from "react-native-vector-icons/MaterialCommunityIcons"
 
 
 
-type onChangeType = (entry: string) => any
-type onBlurType = () => any
+type onChangeType = (entry: string) => void
+type onBlurType = () => void
 
 export type InputProps = {
     placeholder: string
@@ -18,7 +18,7 @@ export type InputProps = {
     icon?: boolean
 }
 
-const Input = ({ label, placeholder, value, onChangeText, error, onBlur, keyBoardNumeric, icon }: InputProps) => {
+const Input: React.FunctionComponent<InputProps> = ({ label, placeholder, value, onChangeText, error, onBlur, keyBoardNumeric, icon }) => {
 
     const [eyeOff, setEyeOff] = useState<boolean>(true)
 

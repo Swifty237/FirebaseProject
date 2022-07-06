@@ -16,16 +16,19 @@ import Registration from "./src/screens/Registration"
 import Connection from "./src/screens/Connection"
 import UserHome from "./src/screens/UserHome"
 
-type AppType = {
+
+export type RootStackParamList = {
   Home: undefined
   Registration: undefined
   Connection: undefined
-  UserHome: undefined
+  UserHome: { email: string, user?: string }
 }
+
+
 
 const App = () => {
 
-  const { Navigator, Screen } = createNativeStackNavigator<AppType>()
+  const { Navigator, Screen } = createNativeStackNavigator<RootStackParamList>()
 
   return (
     <NavigationContainer>

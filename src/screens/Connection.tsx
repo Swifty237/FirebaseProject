@@ -5,6 +5,9 @@ import Input from "../components/Input"
 import auth from "@react-native-firebase/auth"
 import * as yup from "yup"
 import { Formik } from "formik"
+import type { NativeStackNavigationProp } from "@react-navigation/native-stack"
+import { RootStackParamList } from "../../App"
+
 
 
 
@@ -13,9 +16,9 @@ const validationSchema = yup.object().shape({
     password: yup.string().required("Champ obligatoire")
 })
 
+type RegistrationNavigationProp = { navigation: NativeStackNavigationProp<RootStackParamList, "Connection"> }
 
-
-const Connection = ({ navigation }: any) => {
+const Connection: React.FunctionComponent<RegistrationNavigationProp> = ({ navigation }) => {
 
     return (
         <View style={styles.container}>

@@ -1,9 +1,14 @@
-import React, { useState } from "react"
+import React from "react"
 import { StyleSheet, View, Text, SafeAreaView } from "react-native"
 import Btn from "../components/Btn"
+import { RootStackParamList } from "../../App"
+import type { NativeStackNavigationProp } from "@react-navigation/native-stack"
 
 
-const Home = ({ navigation }: any) => {
+
+type HomeNavigationProp = { navigation: NativeStackNavigationProp<RootStackParamList, "Home"> }
+
+const Home: React.FunctionComponent<HomeNavigationProp> = ({ navigation }) => {
 
     return (
         <SafeAreaView style={styles.container}>

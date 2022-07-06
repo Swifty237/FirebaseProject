@@ -1,13 +1,13 @@
 import React from "react";
 import { TouchableOpacity, Text } from "react-native"
 
-type buttonType = {
+type ButtonProps = {
     label: string
     textStyle: {}
-    onPress: () => any
+    onPress: () => void
 }
 
-export default function Btn({ label, textStyle, onPress }: buttonType) {
+const Btn: React.FunctionComponent<ButtonProps> = ({ label, textStyle, onPress }) => {
     return (
         <TouchableOpacity onPress={onPress} >
             <Text style={textStyle}>{label}</Text>
@@ -15,3 +15,4 @@ export default function Btn({ label, textStyle, onPress }: buttonType) {
     )
 }
 
+export default Btn
