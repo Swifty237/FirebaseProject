@@ -4,9 +4,6 @@ import Icon from "react-native-vector-icons/MaterialCommunityIcons"
 
 
 
-type onChangeType = (entry: string) => void
-type onBlurType = () => void
-
 export type InputProps = {
     value: string
 }

@@ -15,6 +15,7 @@ import { RootStackParamList } from "../../App"
 type UserHomeProps = NativeStackScreenProps<RootStackParamList, "UserHome">
 
 export type DataType = {
+    id: string | undefined
     userId: string
     login: string
     name: string
@@ -30,8 +31,10 @@ const UserHome: React.FunctionComponent<UserHomeProps> = ({ navigation, route })
     const [userId, setUserId] = useState<string>()
     const [data, setData] = useState<DataType[]>([])
     const [modifButtons, setModifButtons] = useState<boolean>(false)
-    const [delItem, setDelItem] = useState({})
+    const [delItem, setDelItem] = useState<string>("")
+    const [itemIdToDelete, setItemIdToDelete] = useState<string>("")
 
+    console.log(itemIdToDelete)
 
     function onAuthStateChanged(user: any) {
         user ? setUserId(user.uid) : null
@@ -43,7 +46,8 @@ const UserHome: React.FunctionComponent<UserHomeProps> = ({ navigation, route })
         let items: DataType[] = []
 
         firestore()
-            .collection("data").get()
+            .collection("data")
+            .get()
             .then(querySnapshot => {
                 querySnapshot.forEach((snapshot) => {
                     items.push(snapshot.data() as DataType)
@@ -54,32 +58,7 @@ const UserHome: React.FunctionComponent<UserHomeProps> = ({ navigation, route })
     }, [])
 
     const deleteDoc = (item: any) => {
-        firestore()
-            .collection("data")
-            .get()
-            .then(querySnapshot => {
-                querySnapshot.forEach((snapshot) => {
 
-                    firestore()
-                        .collection("data")
-                        .doc(snapshot.id)
-                        .onSnapshot(documentSnapshot => {
-                            console.log("item :", item)
-                            console.log("documentSnapshot :", documentSnapshot.data())
-
-                            if (JSON.stringify(documentSnapshot.data()) === JSON.stringify(item)) {
-                                console.log("true")
-                            }
-                            else {
-                                console.log("false")
-                            }
-                        })
-                })
-            })
-    }
-
-
-    const addDocId = () => {
         firestore()
             .collection("data")
             .get()
@@ -90,13 +69,52 @@ const UserHome: React.FunctionComponent<UserHomeProps> = ({ navigation, route })
                         .collection("data")
                         .doc(snapshot.id)
                         .onSnapshot((documentSnapshot: any) => {
-                            console.log("login: ", documentSnapshot.data().login)
+
+                            if (documentSnapshot.exists && documentSnapshot.data().id === item) {
+
+                                firestore()
+                                    .collection("data")
+                                    .doc(snapshot.id)
+                                    .delete()
+                                    .then(() => {
+                                        console.log("item deleted")
+                                    })
+                            }
+                            return
                         })
                 })
             })
     }
 
-    addDocId()
+
+    const addDocId = () => {
+
+        firestore()
+            .collection("data")
+            .get()
+            .then(querySnapshot => {
+                querySnapshot.forEach((snapshot) => {
+
+                    firestore()
+                        .collection("data")
+                        .doc(snapshot.id)
+                        .onSnapshot((documentSnapshot: any) => {
+                            if (documentSnapshot.data().id == "") {
+
+                                firestore()
+                                    .collection("data")
+                                    .doc(snapshot.id)
+                                    .update({ id: snapshot.id })
+                                    .then(() => {
+                                        console.log("id of ", documentSnapshot.data().name, " added")
+                                    })
+                            }
+                            return
+                        })
+                })
+            })
+    }
+
 
     return (
         <SafeAreaView style={styles.container}>
@@ -113,6 +131,7 @@ const UserHome: React.FunctionComponent<UserHomeProps> = ({ navigation, route })
                             password: values.password,
                             type: values.type
                         })
+                    addDocId()
                     setModalVisible(false)
                 }}>
 
@@ -198,7 +217,7 @@ const UserHome: React.FunctionComponent<UserHomeProps> = ({ navigation, route })
                                                     </View>
                                                     <View style={styles.btnSupprBox}>
                                                         <Btn label="Supprimer" textStyle={styles.btnSuppr} onPress={() => {
-                                                            deleteDoc(delItem)
+                                                            setItemIdToDelete(delItem)
                                                             setModifButtons(false)
                                                         }} />
                                                     </View>
@@ -209,7 +228,7 @@ const UserHome: React.FunctionComponent<UserHomeProps> = ({ navigation, route })
                                     {
                                         data.filter(value => value.userId == userUid).map((item, i) => (
                                             <TouchableOpacity style={styles.containerData} key={i} onLongPress={() => {
-                                                setDelItem(item)
+                                                item.id ? setDelItem(item.id) : null
                                                 setModifButtons(true)
                                             }}>
                                                 <View style={{ flexDirection: "row" }}>
