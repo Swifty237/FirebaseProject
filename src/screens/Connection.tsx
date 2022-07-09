@@ -1,5 +1,5 @@
 import React from "react"
-import { View, Text, StyleSheet } from "react-native"
+import { View, StyleSheet } from "react-native"
 import Btn from "../components/Btn"
 import Input from "../components/Input"
 import auth from "@react-native-firebase/auth"
@@ -31,7 +31,7 @@ const Connection: React.FunctionComponent<RegistrationNavigationProp> = ({ navig
                         .signInWithEmailAndPassword(values.email, values.password)
                         .then((userAuth) => {
                             console.log("User signed in !")
-                            navigation.navigate("UserHome", { email: values.email, user: userAuth.user.uid })
+                            navigation.navigate("UserHome", { email: values.email, userUid: userAuth.user.uid })
                         })
                         .catch(error => {
                             if (error.code === "auth/invalid-email") {

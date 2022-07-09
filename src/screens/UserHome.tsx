@@ -1,13 +1,13 @@
 import React, { useEffect, useState } from "react"
-import { StyleSheet, View, Text, SafeAreaView, Modal, FlatList, ScrollView } from "react-native"
+import { StyleSheet, View, Text, SafeAreaView, Modal, TouchableOpacity, ScrollView, ActivityIndicator, Pressable } from "react-native"
 import Btn from "../components/Btn"
 import auth from "@react-native-firebase/auth"
 import firestore from "@react-native-firebase/firestore"
+import Password from "../components/Password"
 import Input from "../components/Input"
 import { Formik } from "formik"
 import type { NativeStackScreenProps } from "@react-navigation/native-stack"
 import { RootStackParamList } from "../../App"
-import renderItem from "../components/Card"
 
 
 
@@ -24,24 +24,13 @@ export type DataType = {
 
 
 const UserHome: React.FunctionComponent<UserHomeProps> = ({ navigation, route }) => {
-    const { email, user } = route.params
-    const db = firestore().collection("data")
+    const { email, userUid } = route.params
 
-    const [modalVisible, setModalVisible] = useState(false)
-    const [userId, setUserId] = useState()
-    const [data, setData] = useState<DataType[]>()
-
-    db.get()
-        .then(querySnapshot => {
-
-            let items: DataType[] = []
-            querySnapshot.forEach((snapshot) => {
-
-                items.push(snapshot.data() as DataType)
-            })
-            setData(items)
-
-        }).catch(error => console.log(error))
+    const [modalVisible, setModalVisible] = useState<boolean>(false)
+    const [userId, setUserId] = useState<string>()
+    const [data, setData] = useState<DataType[]>([])
+    const [modifButtons, setModifButtons] = useState<boolean>(false)
+    const [delItem, setDelItem] = useState({})
 
 
     function onAuthStateChanged(user: any) {
@@ -50,22 +39,81 @@ const UserHome: React.FunctionComponent<UserHomeProps> = ({ navigation, route })
 
     useEffect(() => {
         auth().onAuthStateChanged(onAuthStateChanged)
+
+        let items: DataType[] = []
+
+        firestore()
+            .collection("data").get()
+            .then(querySnapshot => {
+                querySnapshot.forEach((snapshot) => {
+                    items.push(snapshot.data() as DataType)
+                })
+                setData(items)
+
+            }).catch(error => console.log(error))
     }, [])
 
+    const deleteDoc = (item: any) => {
+        firestore()
+            .collection("data")
+            .get()
+            .then(querySnapshot => {
+                querySnapshot.forEach((snapshot) => {
+
+                    firestore()
+                        .collection("data")
+                        .doc(snapshot.id)
+                        .onSnapshot(documentSnapshot => {
+                            console.log("item :", item)
+                            console.log("documentSnapshot :", documentSnapshot.data())
+
+                            if (JSON.stringify(documentSnapshot.data()) === JSON.stringify(item)) {
+                                console.log("true")
+                            }
+                            else {
+                                console.log("false")
+                            }
+                        })
+                })
+            })
+    }
+
+
+    const addDocId = () => {
+        firestore()
+            .collection("data")
+            .get()
+            .then(querySnapshot => {
+                querySnapshot.forEach((snapshot) => {
+
+                    firestore()
+                        .collection("data")
+                        .doc(snapshot.id)
+                        .onSnapshot((documentSnapshot: any) => {
+                            console.log("login: ", documentSnapshot.data().login)
+                        })
+                })
+            })
+    }
+
+    addDocId()
 
     return (
         <SafeAreaView style={styles.container}>
             <Formik
                 initialValues={{ name: "", login: "", password: "", type: "" }}
                 onSubmit={values => {
+                    firestore()
+                        .collection("data")
+                        .add({
+                            id: "",
+                            userId: userId,
+                            name: values.name,
+                            login: values.login,
+                            password: values.password,
+                            type: values.type
+                        })
                     setModalVisible(false)
-                    db.add({
-                        userId: userId,
-                        name: values.name,
-                        login: values.login,
-                        password: values.password,
-                        type: values.type
-                    })
                 }}>
 
                 {({ handleChange, handleBlur, handleSubmit, values, errors }) => (
@@ -135,13 +183,61 @@ const UserHome: React.FunctionComponent<UserHomeProps> = ({ navigation, route })
                             </View>
                         </View>
                         <View style={styles.datasContainer}>
-                            <FlatList
-                                style={styles.listStyle}
-                                data={data ? data.filter((item: DataType) => item.userId == user) : null}
-                                keyExtractor={item => item.name}
-                                renderItem={renderItem}
-                                ItemSeparatorComponent={() => <View style={styles.separator} />}
-                            />
+
+                            {data != [] ?
+                                <ScrollView>
+                                    <View>
+                                        <Modal visible={modifButtons} animationType="slide" transparent={true}>
+                                            <View style={styles.modalBox}>
+                                                <Pressable style={styles.cancelBtn} onPress={() => setModifButtons(false)}>
+                                                    <Text style={{ color: "black" }}>X</Text>
+                                                </Pressable>
+                                                <View style={styles.modifModalButtons}>
+                                                    <View style={styles.btnModifBox}>
+                                                        <Btn label="Modifier" textStyle={styles.btnModif} onPress={() => setModifButtons(false)} />
+                                                    </View>
+                                                    <View style={styles.btnSupprBox}>
+                                                        <Btn label="Supprimer" textStyle={styles.btnSuppr} onPress={() => {
+                                                            deleteDoc(delItem)
+                                                            setModifButtons(false)
+                                                        }} />
+                                                    </View>
+                                                </View>
+                                            </View>
+                                        </Modal>
+                                    </View>
+                                    {
+                                        data.filter(value => value.userId == userUid).map((item, i) => (
+                                            <TouchableOpacity style={styles.containerData} key={i} onLongPress={() => {
+                                                setDelItem(item)
+                                                setModifButtons(true)
+                                            }}>
+                                                <View style={{ flexDirection: "row" }}>
+                                                    <Text style={styles.dataText}>Nom: </Text>
+                                                    <Text style={{ color: "black" }} >{item.name}</Text>
+                                                </View>
+                                                <View style={{ flexDirection: "row" }}>
+                                                    <Text style={styles.dataText}>Login: </Text>
+                                                    <Text style={{ color: "black" }} >{item.login}</Text>
+                                                </View>
+
+                                                <View style={{ flexDirection: "row" }}>
+                                                    <Text style={styles.dataText}>Mots de passe: </Text>
+                                                    <Password value={item.password} />
+                                                </View>
+
+                                                <View style={{ flexDirection: "row" }}>
+                                                    <Text style={styles.dataText}>Type: </Text>
+                                                    <Text style={{ color: "black" }} >{item.type}</Text>
+                                                </View>
+                                            </TouchableOpacity>
+                                        ))
+                                    }
+                                </ScrollView>
+
+                                :
+                                <ActivityIndicator />
+                            }
                         </View>
                     </View>
                 )}
@@ -159,8 +255,13 @@ const styles = StyleSheet.create({
         alignItems: "center"
     },
 
-    listStyle: {
-        width: "90"
+    containerData: {
+        width: 320,
+        borderWidth: 2,
+        marginVertical: 10,
+        borderColor: "gray",
+        padding: 10
+
     },
 
     inputContainer: {
@@ -181,7 +282,8 @@ const styles = StyleSheet.create({
     btnContainer: {
         flexDirection: "row",
         justifyContent: "center",
-        marginVertical: 15
+        marginVertical: 15,
+        alignItems: "center"
     },
 
     register: {
@@ -221,10 +323,65 @@ const styles = StyleSheet.create({
         alignItems: "center"
     },
 
-    separator: {
+    dataText: {
+        color: "black",
+        fontWeight: "bold",
+        textAlignVertical: "center"
+    },
+
+    btnModif: {
+        color: "white",
+        textAlign: "center",
+        fontWeight: "bold",
+        fontSize: 15
+    },
+
+    btnSuppr: {
+        color: "white",
+        textAlign: "center",
+        fontWeight: "bold",
+        fontSize: 15
+    },
+
+    btnModifBox: {
+        backgroundColor: "#2c3e50",
+        marginEnd: 5,
+        height: 50,
+        padding: 15,
+        borderRadius: 5
+    },
+
+    btnSupprBox: {
+        backgroundColor: "red",
+        marginEnd: 5,
+        height: 50,
+        padding: 15,
+        borderRadius: 5
+    },
+
+    modifModalButtons: {
+        flexDirection: "row",
+        justifyContent: "center",
+    },
+
+    modalBox: {
+        width: 300,
+        height: 120,
+        alignItems: "center",
+        alignSelf: "center",
+        backgroundColor: "#ecf0f1",
+        marginTop: 350,
         borderWidth: 2,
-        marginTop: 5,
-        borderColor: "gray"
+        borderColor: "#ecf0f1"
+    },
+
+    cancelBtn: {
+        borderWidth: 2,
+        borderRadius: 3,
+        paddingHorizontal: 5,
+        alignSelf: "flex-end",
+        margin: 5,
+        backgroundColor: "white"
     }
 })
 

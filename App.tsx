@@ -21,7 +21,7 @@ export type RootStackParamList = {
   Home: undefined
   Registration: undefined
   Connection: undefined
-  UserHome: { email: string, user?: string }
+  UserHome: { email: string, userUid?: string }
 }
 
 
