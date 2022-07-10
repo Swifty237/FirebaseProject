@@ -32,15 +32,16 @@ const UserHome: React.FunctionComponent<UserHomeProps> = ({ navigation, route })
     const [data, setData] = useState<DataType[]>([])
     const [modifButtons, setModifButtons] = useState<boolean>(false)
     const [itemIdToDelete, setItemIdToDelete] = useState<string>("")
+    const [modifItem, setModifItem] = useState<boolean>(true)
     const [deleteItem, setDeleteItem] = useState<boolean>(false)
-    const [refresh, setRefresh] = useState<boolean>(false)
 
     function onAuthStateChanged(user: any) {
         user ? setUserId(user.uid) : null
     }
 
+    auth().onAuthStateChanged(onAuthStateChanged)
+
     useEffect(() => {
-        auth().onAuthStateChanged(onAuthStateChanged)
 
         let items: DataType[] = []
 
@@ -54,77 +55,104 @@ const UserHome: React.FunctionComponent<UserHomeProps> = ({ navigation, route })
                 setData(items)
 
             }).catch(error => console.log(error))
-    }, [onAuthStateChanged, refresh])
 
-    const deleteDoc = (item: any) => {
+    }, [deleteItem, data])
 
+
+
+    const deleteDoc = (item: string) => {
+
+        console.log("in deleteDoc")
         firestore()
             .collection("data")
             .get()
             .then(querySnapshot => {
+
+                console.log("in querySnashopt")
+
                 querySnapshot.forEach((snapshot) => {
+                    //console.log("snapshot(documentShot): ", snapshot.exists)
+                    if (snapshot.exists) {
+                        firestore()
+                            .collection("data")
+                            .doc(snapshot.id)
+                            .onSnapshot((documentShot: any) => {
+                                //console.log("documentShot: ", documentShot.exists)
 
-                    firestore()
-                        .collection("data")
-                        .doc(snapshot.id)
-                        .onSnapshot((documentSnapshot: any) => {
+                                if (documentShot.exists && documentShot.data().id === item) {
 
-                            if (documentSnapshot.exists && documentSnapshot.data().id === item) {
+                                    firestore()
+                                        .collection("data")
+                                        .doc(snapshot.id)
+                                        .delete()
+                                        .then(() => {
+                                            console.log("item deleted")
+                                        })
+                                }
 
-                                firestore()
-                                    .collection("data")
-                                    .doc(snapshot.id)
-                                    .delete()
-                                    .then(() => {
-                                        console.log("item deleted")
-                                    })
-                            }
-                            return
-                        })
+                                else return
+                            })
+                    }
+                    console.log("1")
                 })
-            })
+                console.log("out querySnapshot")
+            }).catch(err => console.error(err))
+        console.log("out deleteDoc")
+
     }
+
 
     const handleDeleteItem = () => {
         if (deleteItem) {
 
             setDeleteItem(false)
             deleteDoc(itemIdToDelete)
-            setItemIdToDelete("")
-            setRefresh(!refresh)
         }
 
     }
-
     handleDeleteItem()
 
 
     const addDocId = () => {
+
+        console.log("in addDocId")
 
         firestore()
             .collection("data")
             .get()
             .then(querySnapshot => {
                 querySnapshot.forEach((snapshot) => {
+                    //console.log("snapshot(documentSnapshot): ", snapshot.exists)
 
-                    firestore()
-                        .collection("data")
-                        .doc(snapshot.id)
-                        .onSnapshot((documentSnapshot: any) => {
-                            if (documentSnapshot.data().id == "") {
+                    if (snapshot.exists) {
+                        firestore()
+                            .collection("data")
+                            .doc(snapshot.id)
+                            .onSnapshot((documentSnapshot: any) => {
+                                //console.log("documentSnapshot: ", documentSnapshot.exists)
 
-                                firestore()
-                                    .collection("data")
-                                    .doc(snapshot.id)
-                                    .update({ id: snapshot.id })
-                                    .then(() => {
-                                        console.log("id of ", documentSnapshot.data().name, " added")
-                                    })
-                            }
-                            return
-                        })
+                                if (documentSnapshot.exists && documentSnapshot.data().id == "") {
+
+                                    firestore()
+                                        .collection("data")
+                                        .doc(snapshot.id)
+                                        .update({ id: snapshot.id })
+                                        .then(() => {
+                                            console.log("id of ", documentSnapshot.data().name, " added")
+
+                                        })
+                                }
+                                else return
+                            })
+                        console.log("2")
+                    }
+                    else return
                 })
+
+                console.log("3")
             })
+
+        console.log("out addDocId")
     }
 
 
@@ -133,6 +161,8 @@ const UserHome: React.FunctionComponent<UserHomeProps> = ({ navigation, route })
             <Formik
                 initialValues={{ name: "", login: "", password: "", type: "" }}
                 onSubmit={values => {
+                    console.log("in onSubmit")
+
                     firestore()
                         .collection("data")
                         .add({
@@ -145,7 +175,8 @@ const UserHome: React.FunctionComponent<UserHomeProps> = ({ navigation, route })
                         })
                     addDocId()
                     modalVisible ? setModalVisible(false) : null
-                    setRefresh(!refresh)
+
+                    console.log("out onSubmit")
                 }}>
 
                 {({ handleChange, handleBlur, handleSubmit, values, errors }) => (
@@ -192,6 +223,7 @@ const UserHome: React.FunctionComponent<UserHomeProps> = ({ navigation, route })
                                 </View>
                                 <View style={styles.cancel}>
                                     <Btn label="Annuler" textStyle={styles.btnLabel} onPress={() => {
+                                        console.log("Annulation ajout doc")
                                         setModalVisible(false)
                                     }} />
                                 </View>
@@ -228,12 +260,18 @@ const UserHome: React.FunctionComponent<UserHomeProps> = ({ navigation, route })
                                                 </Pressable>
                                                 <View style={styles.modifModalButtons}>
                                                     <View style={styles.btnModifBox}>
-                                                        <Btn label="Modifier" textStyle={styles.btnModif} onPress={() => setModifButtons(false)} />
+                                                        <Btn label="Modifier" textStyle={styles.btnModif} onPress={() => {
+                                                            setModifButtons(false)
+                                                            setModifItem(true)
+                                                            setModalVisible(true)
+                                                        }} />
                                                     </View>
                                                     <View style={styles.btnSupprBox}>
                                                         <Btn label="Supprimer" textStyle={styles.btnSuppr} onPress={() => {
+                                                            console.log("in suppression 2")
                                                             setDeleteItem(true)
                                                             setModifButtons(false)
+                                                            console.log("out suppression 2")
                                                         }} />
                                                     </View>
                                                 </View>
@@ -243,8 +281,10 @@ const UserHome: React.FunctionComponent<UserHomeProps> = ({ navigation, route })
                                     {
                                         data.filter(value => value.userId == userUid).map((item, i) => (
                                             <TouchableOpacity style={styles.containerData} key={i} onLongPress={() => {
+                                                console.log("in suppression 1")
                                                 item.id ? setItemIdToDelete(item.id) : null
                                                 setModifButtons(true)
+                                                console.log("out suppression 1")
                                             }}>
                                                 <View style={{ flexDirection: "row" }}>
                                                     <Text style={styles.dataText}>Nom: </Text>
