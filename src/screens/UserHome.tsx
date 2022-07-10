@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react"
-import { StyleSheet, View, Text, SafeAreaView, Modal, TouchableOpacity, ScrollView, ActivityIndicator, Pressable } from "react-native"
+import { StyleSheet, View, Text, SafeAreaView, Modal, TouchableOpacity, ScrollView, ActivityIndicator, Pressable, Animated } from "react-native"
 import Btn from "../components/Btn"
 import auth from "@react-native-firebase/auth"
 import firestore from "@react-native-firebase/firestore"
@@ -31,10 +31,9 @@ const UserHome: React.FunctionComponent<UserHomeProps> = ({ navigation, route })
     const [userId, setUserId] = useState<string>()
     const [data, setData] = useState<DataType[]>([])
     const [modifButtons, setModifButtons] = useState<boolean>(false)
-    const [delItem, setDelItem] = useState<string>("")
     const [itemIdToDelete, setItemIdToDelete] = useState<string>("")
-
-    console.log(itemIdToDelete)
+    const [deleteItem, setDeleteItem] = useState<boolean>(false)
+    const [refresh, setRefresh] = useState<boolean>(false)
 
     function onAuthStateChanged(user: any) {
         user ? setUserId(user.uid) : null
@@ -55,7 +54,7 @@ const UserHome: React.FunctionComponent<UserHomeProps> = ({ navigation, route })
                 setData(items)
 
             }).catch(error => console.log(error))
-    }, [])
+    }, [onAuthStateChanged, refresh])
 
     const deleteDoc = (item: any) => {
 
@@ -85,6 +84,19 @@ const UserHome: React.FunctionComponent<UserHomeProps> = ({ navigation, route })
                 })
             })
     }
+
+    const handleDeleteItem = () => {
+        if (deleteItem) {
+
+            setDeleteItem(false)
+            deleteDoc(itemIdToDelete)
+            setItemIdToDelete("")
+            setRefresh(!refresh)
+        }
+
+    }
+
+    handleDeleteItem()
 
 
     const addDocId = () => {
@@ -132,7 +144,8 @@ const UserHome: React.FunctionComponent<UserHomeProps> = ({ navigation, route })
                             type: values.type
                         })
                     addDocId()
-                    setModalVisible(false)
+                    modalVisible ? setModalVisible(false) : null
+                    setRefresh(!refresh)
                 }}>
 
                 {({ handleChange, handleBlur, handleSubmit, values, errors }) => (
@@ -178,7 +191,9 @@ const UserHome: React.FunctionComponent<UserHomeProps> = ({ navigation, route })
                                     <Btn label="Enregistrer" textStyle={styles.btnLabel} onPress={handleSubmit} />
                                 </View>
                                 <View style={styles.cancel}>
-                                    <Btn label="Annuler" textStyle={styles.btnLabel} onPress={() => setModalVisible(false)} />
+                                    <Btn label="Annuler" textStyle={styles.btnLabel} onPress={() => {
+                                        setModalVisible(false)
+                                    }} />
                                 </View>
                             </View>
                         </Modal>
@@ -217,7 +232,7 @@ const UserHome: React.FunctionComponent<UserHomeProps> = ({ navigation, route })
                                                     </View>
                                                     <View style={styles.btnSupprBox}>
                                                         <Btn label="Supprimer" textStyle={styles.btnSuppr} onPress={() => {
-                                                            setItemIdToDelete(delItem)
+                                                            setDeleteItem(true)
                                                             setModifButtons(false)
                                                         }} />
                                                     </View>
@@ -228,7 +243,7 @@ const UserHome: React.FunctionComponent<UserHomeProps> = ({ navigation, route })
                                     {
                                         data.filter(value => value.userId == userUid).map((item, i) => (
                                             <TouchableOpacity style={styles.containerData} key={i} onLongPress={() => {
-                                                item.id ? setDelItem(item.id) : null
+                                                item.id ? setItemIdToDelete(item.id) : null
                                                 setModifButtons(true)
                                             }}>
                                                 <View style={{ flexDirection: "row" }}>
