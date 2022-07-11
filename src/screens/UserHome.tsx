@@ -25,15 +25,19 @@ export type DataType = {
 
 
 const UserHome: React.FunctionComponent<UserHomeProps> = ({ navigation, route }) => {
+
     const { email, userUid } = route.params
 
     const [modalVisible, setModalVisible] = useState<boolean>(false)
+    const [updateModalVisible, setUpdateModalVisible] = useState<boolean>(false)
     const [userId, setUserId] = useState<string>()
     const [data, setData] = useState<DataType[]>([])
     const [modifButtons, setModifButtons] = useState<boolean>(false)
     const [itemIdToDelete, setItemIdToDelete] = useState<string>("")
-    const [modifItem, setModifItem] = useState<boolean>(true)
+    const [itemToModify, setItemToModify] = useState<DataType>()
     const [deleteItem, setDeleteItem] = useState<boolean>(false)
+    const [modif, setModif] = useState<"add" | "update">("add")
+    const [refresh, setRefresh] = useState<boolean>(false)
 
     function onAuthStateChanged(user: any) {
         user ? setUserId(user.uid) : null
@@ -56,7 +60,9 @@ const UserHome: React.FunctionComponent<UserHomeProps> = ({ navigation, route })
 
             }).catch(error => console.log(error))
 
-    }, [deleteItem, data])
+        return (() => setData([]))
+
+    }, [refresh])
 
 
 
@@ -76,10 +82,10 @@ const UserHome: React.FunctionComponent<UserHomeProps> = ({ navigation, route })
                         firestore()
                             .collection("data")
                             .doc(snapshot.id)
-                            .onSnapshot((documentShot: any) => {
+                            .onSnapshot((documentShot) => {
                                 //console.log("documentShot: ", documentShot.exists)
 
-                                if (documentShot.exists && documentShot.data().id === item) {
+                                if (documentShot.exists && documentShot.data()?.id === item) {
 
                                     firestore()
                                         .collection("data")
@@ -97,6 +103,7 @@ const UserHome: React.FunctionComponent<UserHomeProps> = ({ navigation, route })
                 })
                 console.log("out querySnapshot")
             }).catch(err => console.error(err))
+        setRefresh(!refresh)
         console.log("out deleteDoc")
 
     }
@@ -128,17 +135,17 @@ const UserHome: React.FunctionComponent<UserHomeProps> = ({ navigation, route })
                         firestore()
                             .collection("data")
                             .doc(snapshot.id)
-                            .onSnapshot((documentSnapshot: any) => {
+                            .onSnapshot((documentSnapshot) => {
                                 //console.log("documentSnapshot: ", documentSnapshot.exists)
 
-                                if (documentSnapshot.exists && documentSnapshot.data().id == "") {
+                                if (documentSnapshot.exists && documentSnapshot.data()?.id == "") {
 
                                     firestore()
                                         .collection("data")
                                         .doc(snapshot.id)
                                         .update({ id: snapshot.id })
                                         .then(() => {
-                                            console.log("id of ", documentSnapshot.data().name, " added")
+                                            console.log("id of ", documentSnapshot.data()?.name, " added")
 
                                         })
                                 }
@@ -159,22 +166,50 @@ const UserHome: React.FunctionComponent<UserHomeProps> = ({ navigation, route })
     return (
         <SafeAreaView style={styles.container}>
             <Formik
-                initialValues={{ name: "", login: "", password: "", type: "" }}
+                initialValues={modif == "update" ? {
+                    name: itemToModify?.name,
+                    login: itemToModify?.login,
+                    password: itemToModify?.password,
+                    type: itemToModify?.type
+                }
+                    : { name: "", login: "", password: "", type: "" }}
+
                 onSubmit={values => {
                     console.log("in onSubmit")
 
-                    firestore()
-                        .collection("data")
-                        .add({
-                            id: "",
-                            userId: userId,
-                            name: values.name,
-                            login: values.login,
-                            password: values.password,
-                            type: values.type
-                        })
-                    addDocId()
-                    modalVisible ? setModalVisible(false) : null
+                    if (modif == "add") {
+                        firestore()
+                            .collection("data")
+                            .add({
+                                id: "",
+                                userId: userId,
+                                name: values.name,
+                                login: values.login,
+                                password: values.password,
+                                type: values.type
+                            })
+                        addDocId()
+                        modalVisible ? setModalVisible(false) : null
+                        setRefresh(!refresh)
+                    }
+
+                    else if (modif == "update") {
+                        firestore()
+                            .collection("data")
+                            .doc(itemToModify?.id)
+                            .update({
+                                name: values.name,
+                                login: values.login,
+                                password: values.password,
+                                type: values.type
+                            })
+                            .then(() => {
+                                console.log("User updated!")
+                            })
+                        updateModalVisible ? setUpdateModalVisible(false) : null
+                        setRefresh(!refresh)
+                    }
+
 
                     console.log("out onSubmit")
                 }}>
@@ -185,35 +220,51 @@ const UserHome: React.FunctionComponent<UserHomeProps> = ({ navigation, route })
                             <Text style={styles.text}> Nouvel enregistrement</Text>
                             <ScrollView style={styles.inputContainer}>
                                 <Input
+                                    defaultValue={itemToModify?.name}
                                     label="Nom"
                                     placeholder="Entrez le nom de l'application"
                                     value={values.name}
                                     onChangeText={handleChange("name")}
                                     onBlur={() => handleBlur("name")}
+                                    onFocus={() => {
+                                        modif != "add" ? setModif("add") : null
+                                    }}
                                     error={errors.name} />
 
                                 <Input
+                                    defaultValue={itemToModify?.login}
                                     label="Login"
                                     placeholder="Entrez le login"
                                     value={values.login}
                                     onChangeText={handleChange("login")}
                                     onBlur={() => handleBlur("login")}
+                                    onFocus={() => {
+                                        modif != "add" ? setModif("add") : null
+                                    }}
                                     error={errors.login} />
 
                                 <Input
+                                    defaultValue={itemToModify?.password}
                                     label="Mot de passe"
                                     placeholder="Entrez le mot de passe"
                                     value={values.password}
                                     onChangeText={handleChange("password")}
                                     onBlur={() => handleBlur("password")}
+                                    onFocus={() => {
+                                        modif != "add" ? setModif("add") : null
+                                    }}
                                     error={errors.password} />
 
                                 <Input
+                                    defaultValue={itemToModify?.type}
                                     label="Type"
                                     placeholder="Entrez le type d'application"
                                     value={values.type}
                                     onChangeText={handleChange("type")}
                                     onBlur={() => handleBlur("type")}
+                                    onFocus={() => {
+                                        modif != "add" ? setModif("add") : null
+                                    }}
                                     error={errors.type} />
                             </ScrollView>
 
@@ -225,6 +276,67 @@ const UserHome: React.FunctionComponent<UserHomeProps> = ({ navigation, route })
                                     <Btn label="Annuler" textStyle={styles.btnLabel} onPress={() => {
                                         console.log("Annulation ajout doc")
                                         setModalVisible(false)
+                                    }} />
+                                </View>
+                            </View>
+                        </Modal>
+
+                        <Modal visible={updateModalVisible} animationType="slide">
+                            <Text style={styles.text}> Modification enregistrement</Text>
+                            <ScrollView style={styles.inputContainer}>
+                                <Input
+                                    defaultValue={itemToModify?.name}
+                                    label="Nom"
+                                    placeholder="Entrez le nom de l'application"
+                                    onChangeText={handleChange("name")}
+                                    onBlur={() => handleBlur("name")}
+                                    onFocus={() => {
+                                        modif != "update" ? setModif("update") : null
+                                    }}
+                                    error={errors.name} />
+
+                                <Input
+                                    defaultValue={itemToModify?.login}
+                                    label="Login"
+                                    placeholder="Entrez le login"
+                                    onChangeText={handleChange("login")}
+                                    onBlur={() => handleBlur("login")}
+                                    onFocus={() => {
+                                        modif != "update" ? setModif("update") : null
+                                    }}
+                                    error={errors.login} />
+
+                                <Input
+                                    defaultValue={itemToModify?.password}
+                                    label="Mot de passe"
+                                    placeholder="Entrez le mot de passe"
+                                    onChangeText={handleChange("password")}
+                                    onBlur={() => handleBlur("password")}
+                                    onFocus={() => {
+                                        modif != "update" ? setModif("update") : null
+                                    }}
+                                    error={errors.password} />
+
+                                <Input
+                                    defaultValue={itemToModify?.type}
+                                    label="Type"
+                                    placeholder="Entrez le type d'application"
+                                    onChangeText={handleChange("type")}
+                                    onBlur={() => handleBlur("type")}
+                                    onFocus={() => {
+                                        modif != "update" ? setModif("update") : null
+                                    }}
+                                    error={errors.type} />
+                            </ScrollView>
+
+                            <View style={styles.btnContainer}>
+                                <View style={styles.register}>
+                                    <Btn label="Enregistrer" textStyle={styles.btnLabel} onPress={handleSubmit} />
+                                </View>
+                                <View style={styles.cancel}>
+                                    <Btn label="Annuler" textStyle={styles.btnLabel} onPress={() => {
+                                        console.log("Annulation modif doc")
+                                        setUpdateModalVisible(false)
                                     }} />
                                 </View>
                             </View>
@@ -261,17 +373,18 @@ const UserHome: React.FunctionComponent<UserHomeProps> = ({ navigation, route })
                                                 <View style={styles.modifModalButtons}>
                                                     <View style={styles.btnModifBox}>
                                                         <Btn label="Modifier" textStyle={styles.btnModif} onPress={() => {
+                                                            console.log("in modif btn");
+                                                            setUpdateModalVisible(true)
                                                             setModifButtons(false)
-                                                            setModifItem(true)
-                                                            setModalVisible(true)
+                                                            console.log("out modif btn")
                                                         }} />
                                                     </View>
                                                     <View style={styles.btnSupprBox}>
                                                         <Btn label="Supprimer" textStyle={styles.btnSuppr} onPress={() => {
-                                                            console.log("in suppression 2")
+                                                            console.log("in suppression")
                                                             setDeleteItem(true)
                                                             setModifButtons(false)
-                                                            console.log("out suppression 2")
+                                                            console.log("out suppression")
                                                         }} />
                                                     </View>
                                                 </View>
@@ -281,10 +394,11 @@ const UserHome: React.FunctionComponent<UserHomeProps> = ({ navigation, route })
                                     {
                                         data.filter(value => value.userId == userUid).map((item, i) => (
                                             <TouchableOpacity style={styles.containerData} key={i} onLongPress={() => {
-                                                console.log("in suppression 1")
+                                                console.log("in suppression or modif")
                                                 item.id ? setItemIdToDelete(item.id) : null
+                                                setItemToModify(item)
                                                 setModifButtons(true)
-                                                console.log("out suppression 1")
+                                                console.log("out suppression or modif")
                                             }}>
                                                 <View style={{ flexDirection: "row" }}>
                                                     <Text style={styles.dataText}>Nom: </Text>

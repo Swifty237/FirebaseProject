@@ -6,19 +6,22 @@ import Icon from "react-native-vector-icons/MaterialCommunityIcons"
 
 type onChangeType = (entry: string) => void
 type onBlurType = () => void
+type onFocusType = () => void
 
 export type InputProps = {
     placeholder: string
-    value: any
+    value?: any
     label: string
     error: string | undefined
     onChangeText: onChangeType
     onBlur: onBlurType
     keyBoardNumeric?: boolean
     icon?: boolean
+    defaultValue?: string
+    onFocus: onFocusType
 }
 
-const Input: React.FunctionComponent<InputProps> = ({ label, placeholder, value, onChangeText, error, onBlur, keyBoardNumeric, icon }) => {
+const Input: React.FunctionComponent<InputProps> = ({ label, placeholder, value, onChangeText, error, onBlur, keyBoardNumeric, icon, defaultValue, onFocus }) => {
 
     const [eyeOff, setEyeOff] = useState<boolean>(true)
 
@@ -28,6 +31,8 @@ const Input: React.FunctionComponent<InputProps> = ({ label, placeholder, value,
 
             <View style={styles.inputContainer}>
                 <TextInput
+                    onFocus={onFocus}
+                    defaultValue={defaultValue}
                     style={styles.input}
                     placeholder={placeholder}
                     value={value}
