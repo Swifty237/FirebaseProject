@@ -1,4 +1,4 @@
-import React from "react"
+import React, { useContext } from "react"
 import Btn from "../components/Btn"
 import Input from "../components/Input"
 import { SafeAreaView, StyleSheet, View } from "react-native"
@@ -6,7 +6,8 @@ import auth from "@react-native-firebase/auth"
 import * as yup from "yup"
 import { Formik } from "formik"
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack"
-import { RootStackParamList } from "../../App"
+import { HomeStackParamList } from "../components/Home"
+import { UserContext } from "../utils/UserContext"
 
 
 
@@ -21,9 +22,15 @@ const validationSchema = yup.object().shape({
     passwordConfirm: yup.string().required().oneOf([yup.ref("password"), null], "Les mots de passe ne correspondent pas")
 })
 
-type RegistrationNavigationProp = { navigation: NativeStackNavigationProp<RootStackParamList, "Registration"> }
+type RegistrationNavigationProp = { navigation: NativeStackNavigationProp<HomeStackParamList, "Registration"> }
 
 const Registration: React.FunctionComponent<RegistrationNavigationProp> = ({ navigation }) => {
+
+    console.log("------------------------------------------- In Registration screen -------------------------------------------------------")
+
+    const { isLoggedIn, setIsLoggedIn } = useContext(UserContext)
+
+
 
     return (
         <SafeAreaView style={styles.container}>
@@ -31,22 +38,23 @@ const Registration: React.FunctionComponent<RegistrationNavigationProp> = ({ nav
                 validationSchema={validationSchema}
                 initialValues={{ email: "", password: "", passwordConfirm: "" }}
                 onSubmit={values => {
+                    console.log("in onSubmit (in Registration): --------------------------")
 
                     auth()
                         .createUserWithEmailAndPassword(values.email, values.password)
-                        .then(() => {
+                        .then(userAuth => {
+                            if (!isLoggedIn) { setIsLoggedIn(true) }
                             console.log("User account created & signed in !")
-                            navigation.navigate("UserHome", { email: values.email })
+                            navigation.navigate("UserHome", { email: values.email, userUid: userAuth.user.uid })
                         })
                         .catch(error => {
                             if (error.code === "auth/email-already-in-use") {
-                                console.log("That email adress is already in use !")
+                                console.log("Registration error: That email adress is already in use !")
                             }
-                            if (error.code === "auth/invalid-email") {
-                                console.log("That email address is invalid !")
-                            }
-                            console.error(error)
+                            setIsLoggedIn(false)
+                            //console.error(error)
                         })
+                    console.log("exit onSubmit (in Connection): -------------------------")
                 }}>
 
                 {({ handleChange, handleBlur, handleSubmit, values, errors }) => (

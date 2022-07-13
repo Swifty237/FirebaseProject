@@ -1,12 +1,14 @@
-import React from "react"
-import { View, StyleSheet } from "react-native"
+import React, { useContext } from "react"
+import { View, StyleSheet, Pressable, Text } from "react-native"
 import Btn from "../components/Btn"
 import Input from "../components/Input"
 import auth from "@react-native-firebase/auth"
 import * as yup from "yup"
 import { Formik } from "formik"
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack"
-import { RootStackParamList } from "../../App"
+import { HomeStackParamList } from "../components/Home"
+import { UserContext } from "../utils/UserContext"
+import MMKVStorage from "react-native-mmkv-storage"
 
 
 
@@ -16,9 +18,14 @@ const validationSchema = yup.object().shape({
     password: yup.string().required("Champ obligatoire")
 })
 
-type RegistrationNavigationProp = { navigation: NativeStackNavigationProp<RootStackParamList, "Connection"> }
+type ConnectionNavigationProp = { navigation: NativeStackNavigationProp<HomeStackParamList, "Connection"> }
 
-const Connection: React.FunctionComponent<RegistrationNavigationProp> = ({ navigation }) => {
+const Connection: React.FunctionComponent<ConnectionNavigationProp> = ({ navigation }) => {
+
+    console.log("---------------------------------------------- In Connection screen --------------------------------------------------")
+
+
+    const { isLoggedIn, setIsLoggedIn } = useContext(UserContext)
 
     return (
         <View style={styles.container}>
@@ -27,18 +34,29 @@ const Connection: React.FunctionComponent<RegistrationNavigationProp> = ({ navig
                 validationSchema={validationSchema}
                 initialValues={{ email: "", password: "" }}
                 onSubmit={values => {
+                    console.log("onSubmit (in Connection): --------------------------")
+
+                    console.log("Auth Email: ", values.email)
+                    console.log("Auth Password: ", values.password)
+
                     auth()
                         .signInWithEmailAndPassword(values.email, values.password)
-                        .then((userAuth) => {
+                        .then(userAuth => {
+
+                            if (!isLoggedIn) { setIsLoggedIn(true) }
                             console.log("User signed in !")
                             navigation.navigate("UserHome", { email: values.email, userUid: userAuth.user.uid })
                         })
                         .catch(error => {
-                            if (error.code === "auth/invalid-email") {
-                                console.log("That email address is invalid !")
+                            if (error.code === "auth/user-not-found" || "auth/wrong-password") {
+                                console.log("Authentication error: Invalid user or password !")
                             }
-                            console.error(error)
+                            setIsLoggedIn(false)
+                            //console.error(error)
                         })
+
+                    console.log("exit onSubmit (in Connection): -------------------------")
+
                 }}>
 
                 {({ handleChange, handleBlur, handleSubmit, values, errors }) => (
@@ -66,6 +84,9 @@ const Connection: React.FunctionComponent<RegistrationNavigationProp> = ({ navig
                             <View style={styles.register}>
                                 <Btn label="Valider" textStyle={styles.btnLabel} onPress={handleSubmit} />
                             </View>
+                            <Pressable onPress={() => navigation.navigate("Registration")}>
+                                <Text style={{ color: "black", margin: 10, textAlign: "center" }}>Pas encore inscrit ? <Text style={{ color: "blue" }}>Inscrivez vous ici !</Text></Text>
+                            </Pressable>
                         </View>
                     </View>
                 )}

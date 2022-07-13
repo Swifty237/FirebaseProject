@@ -1,5 +1,5 @@
-import React, { useEffect, useState } from "react"
-import { StyleSheet, View, Text, SafeAreaView, Modal, TouchableOpacity, ScrollView, ActivityIndicator, Pressable, Animated } from "react-native"
+import React, { useEffect, useState, useContext } from "react"
+import { StyleSheet, View, Text, SafeAreaView, Modal, TouchableOpacity, ScrollView, ActivityIndicator, Pressable } from "react-native"
 import Btn from "../components/Btn"
 import auth from "@react-native-firebase/auth"
 import firestore from "@react-native-firebase/firestore"
@@ -7,12 +7,13 @@ import Password from "../components/Password"
 import Input from "../components/Input"
 import { Formik } from "formik"
 import type { NativeStackScreenProps } from "@react-navigation/native-stack"
-import { RootStackParamList } from "../../App"
+import { HomeStackParamList } from "../components/Home"
+import { UserContext } from "../utils/UserContext"
 
 
 
 
-type UserHomeProps = NativeStackScreenProps<RootStackParamList, "UserHome">
+type UserHomeProps = NativeStackScreenProps<HomeStackParamList, "UserHome">
 
 export type DataType = {
     id: string | undefined
@@ -26,18 +27,28 @@ export type DataType = {
 
 const UserHome: React.FunctionComponent<UserHomeProps> = ({ navigation, route }) => {
 
+    console.log("-------------------------------- In UserHome screen ----------------------------------------")
+
+    const { isLoggedIn, setIsLoggedIn } = useContext(UserContext)
+
     const { email, userUid } = route.params
 
-    const [modalVisible, setModalVisible] = useState<boolean>(false)
-    const [updateModalVisible, setUpdateModalVisible] = useState<boolean>(false)
-    const [userId, setUserId] = useState<string>()
-    const [data, setData] = useState<DataType[]>([])
-    const [modifButtons, setModifButtons] = useState<boolean>(false)
-    const [itemIdToDelete, setItemIdToDelete] = useState<string>("")
-    const [itemToModify, setItemToModify] = useState<DataType>()
-    const [deleteItem, setDeleteItem] = useState<boolean>(false)
-    const [modif, setModif] = useState<"add" | "update">("add")
-    const [refresh, setRefresh] = useState<boolean>(false)
+    console.log(email)
+    console.log(userUid)
+
+
+
+    const [modalVisible, setModalVisible] = useState<boolean>(false) // Gère la modal qui contient le formulaire d'ajout de documents
+    const [updateModalVisible, setUpdateModalVisible] = useState<boolean>(false) // Gère la modal qui contient le formulaire de modification des documents
+    const [userId, setUserId] = useState<string>() // récupère l'UID de l'utilisateur dans un document
+    const [data, setData] = useState<DataType[]>([]) // récupère toutes les documents de la collection
+    const [modifButtons, setModifButtons] = useState<boolean>(false) // Gère la modal qui contient les boutons de modification et de suppression de document
+    const [itemIdToDelete, setItemIdToDelete] = useState<string>("") // Récupère l'id du document à supprimer
+    const [itemToModify, setItemToModify] = useState<DataType>() // Récupère le document à modifier
+    const [deleteItem, setDeleteItem] = useState<boolean>(false) // Valide la suppression d'un document
+    const [modif, setModif] = useState<"add" | "update">("add") // Permet de savoir s'il s'agit d'un nouveau document ou d'une modif d'un document existant
+    const [refresh, setRefresh] = useState<boolean>(false) // Sert à provoquer un nouveau rendu apères chaque modification dans la base de données
+
 
     function onAuthStateChanged(user: any) {
         user ? setUserId(user.uid) : null
@@ -65,25 +76,23 @@ const UserHome: React.FunctionComponent<UserHomeProps> = ({ navigation, route })
     }, [refresh])
 
 
+    const deleteDocument = (item: string) => {
 
-    const deleteDoc = (item: string) => {
-
-        console.log("in deleteDoc")
+        console.log("deleteDocument function: --------------------------------------------")
         firestore()
             .collection("data")
             .get()
             .then(querySnapshot => {
 
-                console.log("in querySnashopt")
+                console.log("collection get method: querySnapshot")
 
                 querySnapshot.forEach((snapshot) => {
-                    //console.log("snapshot(documentShot): ", snapshot.exists)
+
                     if (snapshot.exists) {
                         firestore()
                             .collection("data")
                             .doc(snapshot.id)
                             .onSnapshot((documentShot) => {
-                                //console.log("documentShot: ", documentShot.exists)
 
                                 if (documentShot.exists && documentShot.data()?.id === item) {
 
@@ -101,10 +110,10 @@ const UserHome: React.FunctionComponent<UserHomeProps> = ({ navigation, route })
                     }
                     console.log("1")
                 })
-                console.log("out querySnapshot")
+                console.log("exit collection querySnapshot")
             }).catch(err => console.error(err))
         setRefresh(!refresh)
-        console.log("out deleteDoc")
+        console.log("exit deleteDocument function: --------------------------------------------")
 
     }
 
@@ -113,30 +122,28 @@ const UserHome: React.FunctionComponent<UserHomeProps> = ({ navigation, route })
         if (deleteItem) {
 
             setDeleteItem(false)
-            deleteDoc(itemIdToDelete)
+            deleteDocument(itemIdToDelete)
         }
 
     }
     handleDeleteItem()
 
 
-    const addDocId = () => {
+    const addDocumentId = () => {
 
-        console.log("in addDocId")
+        console.log("addDocumentId function: -------------------------------------------------------")
 
         firestore()
             .collection("data")
             .get()
             .then(querySnapshot => {
                 querySnapshot.forEach((snapshot) => {
-                    //console.log("snapshot(documentSnapshot): ", snapshot.exists)
 
                     if (snapshot.exists) {
                         firestore()
                             .collection("data")
                             .doc(snapshot.id)
                             .onSnapshot((documentSnapshot) => {
-                                //console.log("documentSnapshot: ", documentSnapshot.exists)
 
                                 if (documentSnapshot.exists && documentSnapshot.data()?.id == "") {
 
@@ -159,7 +166,7 @@ const UserHome: React.FunctionComponent<UserHomeProps> = ({ navigation, route })
                 console.log("3")
             })
 
-        console.log("out addDocId")
+        console.log("exit addDocumentId function: ----------------------------------------------------------------")
     }
 
 
@@ -175,7 +182,7 @@ const UserHome: React.FunctionComponent<UserHomeProps> = ({ navigation, route })
                     : { name: "", login: "", password: "", type: "" }}
 
                 onSubmit={values => {
-                    console.log("in onSubmit")
+                    console.log("onSubmit (in UserHome): -----------------------------------")
 
                     if (modif == "add") {
                         firestore()
@@ -188,7 +195,7 @@ const UserHome: React.FunctionComponent<UserHomeProps> = ({ navigation, route })
                                 password: values.password,
                                 type: values.type
                             })
-                        addDocId()
+                        addDocumentId()
                         modalVisible ? setModalVisible(false) : null
                         setRefresh(!refresh)
                     }
@@ -210,8 +217,7 @@ const UserHome: React.FunctionComponent<UserHomeProps> = ({ navigation, route })
                         setRefresh(!refresh)
                     }
 
-
-                    console.log("out onSubmit")
+                    console.log("exit onSubmit (in UserHome): -------------------------------------------------")
                 }}>
 
                 {({ handleChange, handleBlur, handleSubmit, values, errors }) => (
@@ -220,7 +226,6 @@ const UserHome: React.FunctionComponent<UserHomeProps> = ({ navigation, route })
                             <Text style={styles.text}> Nouvel enregistrement</Text>
                             <ScrollView style={styles.inputContainer}>
                                 <Input
-                                    defaultValue={itemToModify?.name}
                                     label="Nom"
                                     placeholder="Entrez le nom de l'application"
                                     value={values.name}
@@ -229,10 +234,10 @@ const UserHome: React.FunctionComponent<UserHomeProps> = ({ navigation, route })
                                     onFocus={() => {
                                         modif != "add" ? setModif("add") : null
                                     }}
-                                    error={errors.name} />
+                                    error={errors.name}
+                                    onSubmitEditing={() => { }} />
 
                                 <Input
-                                    defaultValue={itemToModify?.login}
                                     label="Login"
                                     placeholder="Entrez le login"
                                     value={values.login}
@@ -241,10 +246,10 @@ const UserHome: React.FunctionComponent<UserHomeProps> = ({ navigation, route })
                                     onFocus={() => {
                                         modif != "add" ? setModif("add") : null
                                     }}
-                                    error={errors.login} />
+                                    error={errors.login}
+                                    onSubmitEditing={() => { }} />
 
                                 <Input
-                                    defaultValue={itemToModify?.password}
                                     label="Mot de passe"
                                     placeholder="Entrez le mot de passe"
                                     value={values.password}
@@ -253,10 +258,10 @@ const UserHome: React.FunctionComponent<UserHomeProps> = ({ navigation, route })
                                     onFocus={() => {
                                         modif != "add" ? setModif("add") : null
                                     }}
-                                    error={errors.password} />
+                                    error={errors.password}
+                                    onSubmitEditing={() => { }} />
 
                                 <Input
-                                    defaultValue={itemToModify?.type}
                                     label="Type"
                                     placeholder="Entrez le type d'application"
                                     value={values.type}
@@ -265,7 +270,8 @@ const UserHome: React.FunctionComponent<UserHomeProps> = ({ navigation, route })
                                     onFocus={() => {
                                         modif != "add" ? setModif("add") : null
                                     }}
-                                    error={errors.type} />
+                                    error={errors.type}
+                                    onSubmitEditing={() => { }} />
                             </ScrollView>
 
                             <View style={styles.btnContainer}>
@@ -293,7 +299,8 @@ const UserHome: React.FunctionComponent<UserHomeProps> = ({ navigation, route })
                                     onFocus={() => {
                                         modif != "update" ? setModif("update") : null
                                     }}
-                                    error={errors.name} />
+                                    error={errors.name}
+                                    onSubmitEditing={() => { }} />
 
                                 <Input
                                     defaultValue={itemToModify?.login}
@@ -304,7 +311,8 @@ const UserHome: React.FunctionComponent<UserHomeProps> = ({ navigation, route })
                                     onFocus={() => {
                                         modif != "update" ? setModif("update") : null
                                     }}
-                                    error={errors.login} />
+                                    error={errors.login}
+                                    onSubmitEditing={() => { }} />
 
                                 <Input
                                     defaultValue={itemToModify?.password}
@@ -315,7 +323,8 @@ const UserHome: React.FunctionComponent<UserHomeProps> = ({ navigation, route })
                                     onFocus={() => {
                                         modif != "update" ? setModif("update") : null
                                     }}
-                                    error={errors.password} />
+                                    error={errors.password}
+                                    onSubmitEditing={() => { }} />
 
                                 <Input
                                     defaultValue={itemToModify?.type}
@@ -326,7 +335,8 @@ const UserHome: React.FunctionComponent<UserHomeProps> = ({ navigation, route })
                                     onFocus={() => {
                                         modif != "update" ? setModif("update") : null
                                     }}
-                                    error={errors.type} />
+                                    error={errors.type}
+                                    onSubmitEditing={() => { }} />
                             </ScrollView>
 
                             <View style={styles.btnContainer}>
@@ -342,7 +352,7 @@ const UserHome: React.FunctionComponent<UserHomeProps> = ({ navigation, route })
                             </View>
                         </Modal>
 
-                        <Text style={styles.text}>Bonjour {email}</Text>
+                        <Text style={styles.text}>Bonjour {email ? email : null}</Text>
 
                         <View style={styles.btnContainer}>
                             <View style={styles.register}>
@@ -354,8 +364,9 @@ const UserHome: React.FunctionComponent<UserHomeProps> = ({ navigation, route })
                                     auth()
                                         .signOut()
                                         .then(() => {
+                                            isLoggedIn ? setIsLoggedIn(false) : null
                                             console.log('User signed out!')
-                                            navigation.navigate("Home")
+                                            navigation.navigate("Connection")
                                         })
                                 }} />
                             </View>
@@ -392,7 +403,7 @@ const UserHome: React.FunctionComponent<UserHomeProps> = ({ navigation, route })
                                         </Modal>
                                     </View>
                                     {
-                                        data.filter(value => value.userId == userUid).map((item, i) => (
+                                        data.filter(item => item.userId == userUid).map((item, i) => (
                                             <TouchableOpacity style={styles.containerData} key={i} onLongPress={() => {
                                                 console.log("in suppression or modif")
                                                 item.id ? setItemIdToDelete(item.id) : null
