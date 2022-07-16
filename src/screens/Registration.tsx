@@ -26,11 +26,9 @@ type RegistrationNavigationProp = { navigation: NativeStackNavigationProp<HomeSt
 
 const Registration: React.FunctionComponent<RegistrationNavigationProp> = ({ navigation }) => {
 
-    console.log("------------------------------------------- In Registration screen -------------------------------------------------------")
+    console.log("------------------------------------------- In Registration screen ---------------------------------------------------")
 
-    const { isLoggedIn, setIsLoggedIn } = useContext(UserContext)
-
-
+    const { isLoggedIn, setIsLoggedIn, setUserEmail, setUserUID } = useContext(UserContext)
 
     return (
         <SafeAreaView style={styles.container}>
@@ -38,14 +36,19 @@ const Registration: React.FunctionComponent<RegistrationNavigationProp> = ({ nav
                 validationSchema={validationSchema}
                 initialValues={{ email: "", password: "", passwordConfirm: "" }}
                 onSubmit={values => {
-                    console.log("in onSubmit (in Registration): --------------------------")
+                    console.log("=> onSubmit (Registration screen)")
 
                     auth()
                         .createUserWithEmailAndPassword(values.email, values.password)
                         .then(userAuth => {
-                            if (!isLoggedIn) { setIsLoggedIn(true) }
                             console.log("User account created & signed in !")
+
+                            if (!isLoggedIn) { setIsLoggedIn(true) }
+
                             navigation.navigate("UserHome", { email: values.email, userUid: userAuth.user.uid })
+
+                            setUserEmail(values.email)
+                            setUserUID(userAuth.user.uid)
                         })
                         .catch(error => {
                             if (error.code === "auth/email-already-in-use") {
@@ -54,7 +57,7 @@ const Registration: React.FunctionComponent<RegistrationNavigationProp> = ({ nav
                             setIsLoggedIn(false)
                             //console.error(error)
                         })
-                    console.log("exit onSubmit (in Connection): -------------------------")
+                    console.log("=> exit onSubmit (Registration screen)")
                 }}>
 
                 {({ handleChange, handleBlur, handleSubmit, values, errors }) => (

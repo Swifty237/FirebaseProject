@@ -15,7 +15,7 @@ export type InputProps = {
     icon?: boolean
     defaultValue?: string
     onFocus?: () => void
-    onSubmitEditing?: () => void
+    onSubmitEditing?: () => void // Je pourrais peut être m'en servir pour faire un reset de l'input après un enregistrement (à modéliser)
 }
 
 const Input: React.FunctionComponent<InputProps> = ({ label, placeholder, value, onChangeText, error, onBlur, keyBoardNumeric, icon, defaultValue, onFocus, onSubmitEditing }) => {

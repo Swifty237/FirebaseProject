@@ -8,7 +8,6 @@ import { Formik } from "formik"
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack"
 import { HomeStackParamList } from "../components/Home"
 import { UserContext } from "../utils/UserContext"
-import MMKVStorage from "react-native-mmkv-storage"
 
 
 
@@ -25,39 +24,42 @@ const Connection: React.FunctionComponent<ConnectionNavigationProp> = ({ navigat
     console.log("---------------------------------------------- In Connection screen --------------------------------------------------")
 
 
-    const { isLoggedIn, setIsLoggedIn } = useContext(UserContext)
+    const { isLoggedIn, setIsLoggedIn, setUserEmail, setUserUID } = useContext(UserContext)
 
     return (
+
         <View style={styles.container}>
 
             <Formik
                 validationSchema={validationSchema}
                 initialValues={{ email: "", password: "" }}
                 onSubmit={values => {
-                    console.log("onSubmit (in Connection): --------------------------")
-
-                    console.log("Auth Email: ", values.email)
-                    console.log("Auth Password: ", values.password)
+                    console.log("=> onSubmit (Connection screen)")
 
                     auth()
                         .signInWithEmailAndPassword(values.email, values.password)
                         .then(userAuth => {
 
-                            if (!isLoggedIn) { setIsLoggedIn(true) }
                             console.log("User signed in !")
+
+                            if (!isLoggedIn) { setIsLoggedIn(true) }
+
                             navigation.navigate("UserHome", { email: values.email, userUid: userAuth.user.uid })
+                            setUserEmail(values.email)
+                            setUserUID(userAuth.user.uid)
                         })
                         .catch(error => {
                             if (error.code === "auth/user-not-found" || "auth/wrong-password") {
                                 console.log("Authentication error: Invalid user or password !")
                             }
                             setIsLoggedIn(false)
+
                             //console.error(error)
                         })
 
-                    console.log("exit onSubmit (in Connection): -------------------------")
-
+                    console.log("=> exit onSubmit (Connection screen)")
                 }}>
+
 
                 {({ handleChange, handleBlur, handleSubmit, values, errors }) => (
                     <View>
@@ -84,8 +86,11 @@ const Connection: React.FunctionComponent<ConnectionNavigationProp> = ({ navigat
                             <View style={styles.register}>
                                 <Btn label="Valider" textStyle={styles.btnLabel} onPress={handleSubmit} />
                             </View>
-                            <Pressable onPress={() => navigation.navigate("Registration")}>
-                                <Text style={{ color: "black", margin: 10, textAlign: "center" }}>Pas encore inscrit ? <Text style={{ color: "blue" }}>Inscrivez vous ici !</Text></Text>
+                            <Pressable onPress={() => {
+                                console.log("Go to registration")
+                                navigation.navigate("Registration")
+                            }}>
+                                <Text style={{ color: "black", margin: 10, textAlign: "center" }}>Pas encore inscrit ? <Text style={{ color: "blue" }}>Inscription ici !</Text></Text>
                             </Pressable>
                         </View>
                     </View>
