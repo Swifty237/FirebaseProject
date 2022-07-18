@@ -26,10 +26,7 @@ export type DataType = {
     type: string
 }
 
-// Bugs de modification de document à réparer
-//     1) => Après l'ajout d'un nouveau document ou la modifcation d'un document déja existant les inputs ne se vide pas
-
-const UserHome: React.FunctionComponent<UserHomeProps> = ({ navigation, route }) => {
+const UserHome: React.FunctionComponent<UserHomeProps> = ({ navigation, route }): JSX.Element => {
 
     console.log("----------------------------------------------- In UserHome screen ---------------------------------------------------")
 
@@ -43,8 +40,7 @@ const UserHome: React.FunctionComponent<UserHomeProps> = ({ navigation, route })
     const [itemToModify, setItemToModify] = useState<DataType>() // Récupère le document à modifier
     const [deleteItem, setDeleteItem] = useState<boolean>(false) // Valide la suppression d'un document
     const [data, setData] = useState<DataType[]>([]) // récupère tous les documents de la collection
-    const [refresh, setRefresh] = useState<boolean>(false)
-
+    const [refresh, setRefresh] = useState<boolean>(false) // Permet de provoquer un rendu après modification dans la database
 
 
     useMemo(() => {
@@ -73,12 +69,6 @@ const UserHome: React.FunctionComponent<UserHomeProps> = ({ navigation, route })
 
     auth().onAuthStateChanged(onAuthStateChanged)
 
-    const handleRefresh = () => {
-        if (refresh) {
-            setRefresh(false)
-        }
-    }
-
     useEffect(() => {
         let items: DataType[] = []
 
@@ -90,7 +80,7 @@ const UserHome: React.FunctionComponent<UserHomeProps> = ({ navigation, route })
                     items.push(snapshot.data() as DataType)
                 })
                 setData(items)
-                handleRefresh()
+                refresh ? setRefresh(false) : null
 
             }).catch(error => console.log(error))
         return (() => setData([]))
@@ -109,7 +99,6 @@ const UserHome: React.FunctionComponent<UserHomeProps> = ({ navigation, route })
 
     return (
         <SafeAreaView style={styles.container}>
-
             <AddForm
                 userID={userId}
                 addModalVisible={addModalVisible}
@@ -125,6 +114,7 @@ const UserHome: React.FunctionComponent<UserHomeProps> = ({ navigation, route })
                 updateFormRefresh={refresh}
                 getUpdateFormRefresh={(param) => setRefresh(param)}
             />
+
 
             <Text style={styles.text}>Bonjour {email != "" ? email : userEmail}</Text>
 
@@ -154,11 +144,11 @@ const UserHome: React.FunctionComponent<UserHomeProps> = ({ navigation, route })
                     getButtons={(param) => setModifButtons(param)}
                     getModifForm={(param) => setUpdateModalVisible(param)}
                     getDelete={(param) => setDeleteItem(param)}
+                //getResetForm={(param) => setResetForm(param)}
                 />
 
                 {data != [] ?
                     <ScrollView>
-
                         {
                             data.filter(item => userUid ? item.userId == userUid : item.userId == userUID).map((item, i) => (
                                 <TouchableOpacity style={styles.containerData} key={i} onLongPress={() => {

@@ -8,6 +8,7 @@ import { Formik } from "formik"
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack"
 import { HomeStackParamList } from "../components/Home"
 import { UserContext } from "../utils/UserContext"
+import ReactNativeBiometrics, { BiometryTypes } from "react-native-biometrics"
 
 
 
@@ -19,12 +20,27 @@ const validationSchema = yup.object().shape({
 
 type ConnectionNavigationProp = { navigation: NativeStackNavigationProp<HomeStackParamList, "Connection"> }
 
-const Connection: React.FunctionComponent<ConnectionNavigationProp> = ({ navigation }) => {
+const Connection: React.FunctionComponent<ConnectionNavigationProp> = ({ navigation }): JSX.Element => {
 
     console.log("---------------------------------------------- In Connection screen --------------------------------------------------")
 
-
     const { isLoggedIn, setIsLoggedIn, setUserEmail, setUserUID } = useContext(UserContext)
+    const rnBiometrics = new ReactNativeBiometrics()
+
+    rnBiometrics.isSensorAvailable()
+        .then((resultObject) => {
+            const { available, biometryType } = resultObject
+
+            if (available && biometryType === BiometryTypes.TouchID) {
+                console.log("TouchID is supported")
+            } else if (available && biometryType === BiometryTypes.FaceID) {
+                console.log("FaceID is supported")
+            } else if (available && biometryType === BiometryTypes.Biometrics) {
+                console.log("Biometrics is supported")
+            } else {
+                console.log("Biometrics not supported")
+            }
+        })
 
     return (
 

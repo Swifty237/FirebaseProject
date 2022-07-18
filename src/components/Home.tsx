@@ -1,13 +1,10 @@
-import React, { useEffect, useState } from "react"
+import React from "react"
 import Registration from "../screens/Registration"
 import Connection from "../screens/Connection"
 import UserHome from "../screens/UserHome"
 import { createNativeStackNavigator } from "@react-navigation/native-stack"
 import { UserContext } from "../utils/UserContext"
 import { MMKVLoader, useMMKVStorage } from "react-native-mmkv-storage"
-import firestore from "@react-native-firebase/firestore"
-import { DataType } from "../screens/UserHome"
-
 
 
 export type HomeStackParamList = {
@@ -18,8 +15,7 @@ export type HomeStackParamList = {
 
 const storage = new MMKVLoader().initialize()
 
-//Si je type mon composant Home comme ceci => Home: React.FunctionComponent<RootStackParamList>, j'obtiens une erreur dans App
-const Home: React.FunctionComponent = () => {
+const Home: React.FunctionComponent = (): JSX.Element => {
     console.log("----------------------------------------------- In home component ----------------------------------------------------")
 
     const [isLoggedIn, setIsLoggedIn] = useMMKVStorage<boolean>("isLoggedIn", storage, false) // Permet de savoir si l'utilisateur est logué ou non et établir les routes en conséquences

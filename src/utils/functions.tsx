@@ -2,8 +2,7 @@ import React from "react"
 import firestore from "@react-native-firebase/firestore"
 
 
-export const deleteDocument = (item: string) => {
-
+export const deleteDocument = (item: string): void => {
     console.log("=> deleteDocument (function)")
 
     firestore()
@@ -48,7 +47,7 @@ export const deleteDocument = (item: string) => {
 
 // addDocumentId est un fonction qui permet de récupérer l'ID d'un document et de le rajouter dans le champ "id" s'il est vide
 // Cette fonction est utiliser pour l'ajout d'un nouveau document car au départ le document est ajouter avec le champ "id" vide
-export const addDocumentId = () => {
+export const addDocumentId = (): void => {
 
     console.log("addDocumentId (UserHome function)")
 

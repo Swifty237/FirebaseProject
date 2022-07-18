@@ -13,7 +13,7 @@ import { NavigationContainer } from "@react-navigation/native"
 import Home from "./src/components/Home"
 
 
-const App: React.FunctionComponent = () => {
+const App: React.FunctionComponent = (): JSX.Element => {
 
   return (
     <NavigationContainer>

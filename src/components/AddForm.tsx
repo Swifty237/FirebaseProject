@@ -17,12 +17,11 @@ type AddFormType = {
 
 const AddForm: React.FunctionComponent<AddFormType> = ({ userID, addModalVisible, getAddModalVisible, addFormRefresh, getAddFormRefresh }) => {
 
-
     return (
         <Formik
-            enableReinitialize={true} // A permis la résolution du bug 1) 
+            enableReinitialize={true}
             initialValues={{ name: "", login: "", password: "", type: "" }}
-            onSubmit={values => {
+            onSubmit={(values, { resetForm }) => {
                 console.log("=> onSubmit (AddForm)")
                 console.log("State addModalVisible in AddForm (Enter): ", addModalVisible)
                 console.log("State userID in AddForm (Enter): ", userID) // Pas besoin de récupérer la valeur de sortie de userId car il ne change pas d'état
@@ -40,6 +39,7 @@ const AddForm: React.FunctionComponent<AddFormType> = ({ userID, addModalVisible
                 addDocumentId() // Permet de remplir le champ id vide
                 addModalVisible ? getAddModalVisible(false) : null
                 !addFormRefresh ? getAddFormRefresh(true) : null
+                resetForm() // Permet de vider le formulaire après la soumission
 
                 console.log("State addModalVisible in AddForm (Exit):", addModalVisible)
                 console.log("=> exit onSubmit (AddForm)")
@@ -58,7 +58,7 @@ const AddForm: React.FunctionComponent<AddFormType> = ({ userID, addModalVisible
                                 onChangeText={handleChange("name")}
                                 onBlur={() => handleBlur("name")}
                                 error={errors.name}
-                                onSubmitEditing={() => { }} />
+                            />
 
                             <Input
                                 label="Login"
@@ -67,7 +67,7 @@ const AddForm: React.FunctionComponent<AddFormType> = ({ userID, addModalVisible
                                 onChangeText={handleChange("login")}
                                 onBlur={() => handleBlur("login")}
                                 error={errors.login}
-                                onSubmitEditing={() => { }} />
+                            />
 
                             <Input
                                 label="Mot de passe"
@@ -76,7 +76,7 @@ const AddForm: React.FunctionComponent<AddFormType> = ({ userID, addModalVisible
                                 onChangeText={handleChange("password")}
                                 onBlur={() => handleBlur("password")}
                                 error={errors.password}
-                                onSubmitEditing={() => { }} />
+                            />
 
                             <Input
                                 label="Type"
@@ -85,7 +85,7 @@ const AddForm: React.FunctionComponent<AddFormType> = ({ userID, addModalVisible
                                 onChangeText={handleChange("type")}
                                 onBlur={() => handleBlur("type")}
                                 error={errors.type}
-                                onSubmitEditing={() => { }} />
+                            />
                         </ScrollView>
 
                         <View style={styles.btnContainer}>

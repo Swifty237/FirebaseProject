@@ -10,9 +10,7 @@ type ModifButtonsType = {
 }
 
 
-
-
-const ModifButtons: FunctionComponent<ModifButtonsType> = ({ visibleButtons, getButtons, getModifForm, getDelete }) => {
+const ModifButtons: FunctionComponent<ModifButtonsType> = ({ visibleButtons, getButtons, getModifForm, getDelete }): JSX.Element => {
 
     return (
         <View style={styles.container}>

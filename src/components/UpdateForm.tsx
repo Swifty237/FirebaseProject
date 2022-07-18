@@ -1,4 +1,4 @@
-import React, { FunctionComponent } from "react"
+import React from "react"
 import { Modal, Text, ScrollView, StyleSheet, View } from "react-native"
 import Input from "./Input"
 import { Formik } from "formik"
@@ -16,12 +16,12 @@ type updateFormType = {
 }
 
 
-const UpdateForm: FunctionComponent<updateFormType> = ({ updateModalVisible, item, getUpdateModalVisible, updateFormRefresh, getUpdateFormRefresh }) => {
+const UpdateForm: React.FunctionComponent<updateFormType> = ({ updateModalVisible, item, getUpdateModalVisible, updateFormRefresh, getUpdateFormRefresh }) => {
 
     return (
 
         <Formik
-            enableReinitialize={true} // A permis la résolution du bug 1) 
+            enableReinitialize={true} // A permis de résoudre le bug des champs qui se vident alors qu'ils n'ont pas été modifié 
             initialValues={{ name: item?.name, login: item?.login, password: item?.password, type: item?.type }}
             onSubmit={values => {
                 console.log("=> onSubmit (UpdateForm)")
@@ -59,7 +59,7 @@ const UpdateForm: FunctionComponent<updateFormType> = ({ updateModalVisible, ite
                                 onChangeText={handleChange("name")}
                                 onBlur={() => handleBlur("name")}
                                 error={errors.name}
-                                onSubmitEditing={() => { }} />
+                            />
 
                             <Input
                                 defaultValue={item?.login}
@@ -68,7 +68,7 @@ const UpdateForm: FunctionComponent<updateFormType> = ({ updateModalVisible, ite
                                 onChangeText={handleChange("login")}
                                 onBlur={() => handleBlur("login")}
                                 error={errors.login}
-                                onSubmitEditing={() => { }} />
+                            />
 
                             <Input
                                 defaultValue={item?.password}
@@ -77,7 +77,7 @@ const UpdateForm: FunctionComponent<updateFormType> = ({ updateModalVisible, ite
                                 onChangeText={handleChange("password")}
                                 onBlur={() => handleBlur("password")}
                                 error={errors.password}
-                                onSubmitEditing={() => { }} />
+                            />
 
                             <Input
                                 defaultValue={item?.type}
@@ -86,7 +86,7 @@ const UpdateForm: FunctionComponent<updateFormType> = ({ updateModalVisible, ite
                                 onChangeText={handleChange("type")}
                                 onBlur={() => handleBlur("type")}
                                 error={errors.type}
-                                onSubmitEditing={() => { }} />
+                            />
                         </ScrollView>
 
                         <View style={styles.btnContainer}>
