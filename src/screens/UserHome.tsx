@@ -1,6 +1,5 @@
 import React, { useEffect, useState, useContext, useMemo } from "react"
 import { StyleSheet, View, Text, SafeAreaView, TouchableOpacity, ScrollView, ActivityIndicator } from "react-native"
-import Btn from "../components/Btn"
 import auth from "@react-native-firebase/auth"
 import firestore from "@react-native-firebase/firestore"
 import Password from "../components/Password"
@@ -11,7 +10,11 @@ import { deleteDocument } from "../utils/functions"
 import AddForm from "../components/AddForm"
 import UpdateForm from "../components/UpdateForm"
 import ModifButtons from "../components/ModifButtons"
-
+import AntDesign from "react-native-vector-icons/AntDesign"
+import Entypo from "react-native-vector-icons/Entypo"
+import getStorage from "@react-native-firebase/storage"
+import ref from "@react-native-firebase/storage"
+import uploadBytes from "@react-native-firebase/storage"
 
 
 
@@ -31,6 +34,7 @@ const UserHome: React.FunctionComponent<UserHomeProps> = ({ navigation, route })
     console.log("----------------------------------------------- In UserHome screen ---------------------------------------------------")
 
     const { isLoggedIn, setIsLoggedIn, userEmail, setUserEmail, userUID, setUserUID } = useContext(UserContext)
+    enum STACKCHOICE { SIGN_IN, LOGGED }
     const { email, userUid } = route.params
     const [addModalVisible, setAddModalVisible] = useState<boolean>(false) // Gère la modal qui contient le formulaire d'ajout de documents
     const [updateModalVisible, setUpdateModalVisible] = useState<boolean>(false) // Gère la modal qui contient le formulaire de modification des documents
@@ -115,36 +119,53 @@ const UserHome: React.FunctionComponent<UserHomeProps> = ({ navigation, route })
                 getUpdateFormRefresh={(param) => setRefresh(param)}
             />
 
+            <View style={styles.headerContainer}>
+                <View style={styles.pictureBox}>
 
-            <Text style={styles.text}>Bonjour {email != "" ? email : userEmail}</Text>
-
-            <View style={styles.btnContainer}>
-                <View style={styles.register}>
-                    <Btn label="Nouvel enregistrement" textStyle={styles.btnLabel} onPress={() => setAddModalVisible(true)} />
                 </View>
 
-                <View style={styles.logOut}>
-                    <Btn label="Deconnexion" textStyle={styles.btnLabel} onPress={() => {
-                        auth()
-                            .signOut()
-                            .then(() => {
-                                isLoggedIn ? setIsLoggedIn(false) : null
-                                console.log('User signed out!')
+                <View style={styles.txtBtnBox}>
+                    <View>
+                        <Text style={styles.text}>{email != "" ? email : userEmail}</Text>
+                    </View>
+                    <View style={styles.containerBtn}>
 
-                                setUserEmail("")    // =>  Réinitialisation les données à la déconnection
-                                setUserUID("")    // =>  Réinitialisation les données à la déconnection
-                                navigation.navigate("Connection")
-                            })
-                    }} />
+                        <TouchableOpacity style={styles.btnUpload} onPress={() => setAddModalVisible(true)}>
+                            <AntDesign name="addfile" size={30} color="#2c3e50" />
+                        </TouchableOpacity>
+
+                        <TouchableOpacity style={styles.btnUpload} onPress={() => navigation.navigate("UserGallery")}>
+                            <Entypo name="upload" size={30} color="#2c3e50" />
+                        </TouchableOpacity>
+
+                        <TouchableOpacity style={styles.btnUpload} onPress={() => navigation.navigate("UserDatabaseGallery", { userImages: [] })}>
+                            <Entypo name="folder-images" size={30} color="#2c3e50" />
+                        </TouchableOpacity>
+
+                        <TouchableOpacity style={styles.btnLogout} onPress={() => {
+                            auth()
+                                .signOut()
+                                .then(() => {
+                                    isLoggedIn === STACKCHOICE.LOGGED && setIsLoggedIn(STACKCHOICE.SIGN_IN)
+                                    console.log('User signed out!')
+
+                                    // setUserEmail("")    // =>  Réinitialisation les données à la déconnection
+                                    // setUserUID("")    // =>  Réinitialisation les données à la déconnection
+                                    navigation.navigate("Connection")
+                                })
+                        }}>
+                            <AntDesign name="logout" size={30} color="white" />
+                        </TouchableOpacity>
+                    </View>
                 </View>
             </View>
+
             <View style={styles.datasContainer}>
                 <ModifButtons
                     visibleButtons={modifButtons}
                     getButtons={(param) => setModifButtons(param)}
                     getModifForm={(param) => setUpdateModalVisible(param)}
                     getDelete={(param) => setDeleteItem(param)}
-                //getResetForm={(param) => setResetForm(param)}
                 />
 
                 {data != [] ?
@@ -166,11 +187,13 @@ const UserHome: React.FunctionComponent<UserHomeProps> = ({ navigation, route })
                                         <Text style={{ color: "black" }} >{item.login}</Text>
                                     </View>
 
-                                    <View style={{ flexDirection: "row" }}>
+                                    <View>
                                         <Text style={styles.dataText}>Mots de passe: </Text>
 
                                         {/* Password: composant créé pour gérer l'affichage ou non des mots de passes */}
+
                                         <Password value={item.password} />
+                                        {/* <Text>{eyeToggle ? item.password : '*'.padStart(item.password.length, '*')}</Text> */}
                                     </View>
 
                                     <View style={{ flexDirection: "row" }}>
@@ -194,7 +217,6 @@ const UserHome: React.FunctionComponent<UserHomeProps> = ({ navigation, route })
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        backgroundColor: "white",
         justifyContent: "center",
         alignItems: "center"
     },
@@ -202,16 +224,11 @@ const styles = StyleSheet.create({
     containerData: {
         width: 320,
         borderWidth: 2,
+        borderRadius: 10,
+        borderColor: "#2c3e50",
         marginVertical: 10,
-        borderColor: "gray",
         padding: 10
 
-    },
-
-    inputContainer: {
-        flex: 2,
-        marginTop: 20,
-        paddingHorizontal: 20
     },
 
     text: {
@@ -219,38 +236,7 @@ const styles = StyleSheet.create({
         fontSize: 18,
         fontStyle: "italic",
         fontWeight: "bold",
-        marginTop: 20,
         textAlign: "center"
-    },
-    btnContainer: {
-        flexDirection: "row",
-        justifyContent: "center",
-        marginVertical: 15,
-        alignItems: "center"
-    },
-
-    register: {
-        backgroundColor: "#2c3e50",
-        marginEnd: 5,
-        height: 50,
-        padding: 15,
-        borderRadius: 5
-    },
-
-    logOut: {
-        backgroundColor: "#2c3e50",
-        marginEnd: 5,
-        height: 50,
-        padding: 15,
-        borderRadius: 5,
-        justifyContent: "center"
-    },
-
-    btnLabel: {
-        color: "white",
-        textAlign: "center",
-        fontWeight: "bold",
-        fontSize: 15
     },
 
     datasContainer: {
@@ -262,6 +248,49 @@ const styles = StyleSheet.create({
         color: "black",
         fontWeight: "bold",
         textAlignVertical: "center"
+    },
+
+    pictureBox: {
+        width: 100,
+        height: 100,
+        backgroundColor: "green",
+        marginEnd: 5
+    },
+    headerContainer: {
+        width: "98%",
+        flexDirection: "row"
+    },
+
+    containerBtn: {
+        flexDirection: "row",
+        justifyContent: "space-around"
+    },
+
+    btnUpload: {
+        width: 45,
+        height: 45,
+        justifyContent: "center",
+        alignItems: "center",
+        borderWidth: 2,
+        borderColor: "#2c3e50",
+        borderRadius: 5
+    },
+
+    btnLogout: {
+        width: 45,
+        height: 45,
+        justifyContent: "center",
+        alignItems: "center",
+        borderWidth: 2,
+        borderColor: "#2c3e50",
+        borderRadius: 5,
+        marginLeft: 15,
+        backgroundColor: "#2c3e50"
+    },
+
+    txtBtnBox: {
+        width: "70%",
+        justifyContent: "space-around"
     }
 })
 

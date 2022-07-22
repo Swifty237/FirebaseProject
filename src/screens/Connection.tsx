@@ -8,8 +8,7 @@ import { Formik } from "formik"
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack"
 import { HomeStackParamList } from "../components/Home"
 import { UserContext } from "../utils/UserContext"
-import ReactNativeBiometrics, { BiometryTypes } from "react-native-biometrics"
-
+import FingerPrint from "../components/FingerPrint"
 
 
 
@@ -24,23 +23,8 @@ const Connection: React.FunctionComponent<ConnectionNavigationProp> = ({ navigat
 
     console.log("---------------------------------------------- In Connection screen --------------------------------------------------")
 
-    const { isLoggedIn, setIsLoggedIn, setUserEmail, setUserUID } = useContext(UserContext)
-    const rnBiometrics = new ReactNativeBiometrics()
-
-    rnBiometrics.isSensorAvailable()
-        .then((resultObject) => {
-            const { available, biometryType } = resultObject
-
-            if (available && biometryType === BiometryTypes.TouchID) {
-                console.log("TouchID is supported")
-            } else if (available && biometryType === BiometryTypes.FaceID) {
-                console.log("FaceID is supported")
-            } else if (available && biometryType === BiometryTypes.Biometrics) {
-                console.log("Biometrics is supported")
-            } else {
-                console.log("Biometrics not supported")
-            }
-        })
+    const { isLoggedIn, setIsLoggedIn, userEmail, setUserEmail, userPassword, setUserPassword, setUserUID } = useContext(UserContext)
+    enum STACKCHOICE { SIGN_IN, LOGGED }
 
     return (
 
@@ -58,19 +42,18 @@ const Connection: React.FunctionComponent<ConnectionNavigationProp> = ({ navigat
 
                             console.log("User signed in !")
 
-                            if (!isLoggedIn) { setIsLoggedIn(true) }
+                            isLoggedIn !== STACKCHOICE.LOGGED && setIsLoggedIn(STACKCHOICE.LOGGED)
 
                             navigation.navigate("UserHome", { email: values.email, userUid: userAuth.user.uid })
                             setUserEmail(values.email)
+                            setUserPassword(values.password)
                             setUserUID(userAuth.user.uid)
                         })
                         .catch(error => {
                             if (error.code === "auth/user-not-found" || "auth/wrong-password") {
                                 console.log("Authentication error: Invalid user or password !")
                             }
-                            setIsLoggedIn(false)
-
-                            //console.error(error)
+                            setIsLoggedIn(STACKCHOICE.SIGN_IN)
                         })
 
                     console.log("=> exit onSubmit (Connection screen)")
@@ -102,13 +85,28 @@ const Connection: React.FunctionComponent<ConnectionNavigationProp> = ({ navigat
                             <View style={styles.register}>
                                 <Btn label="Valider" textStyle={styles.btnLabel} onPress={handleSubmit} />
                             </View>
-                            <Pressable onPress={() => {
-                                console.log("Go to registration")
-                                navigation.navigate("Registration")
-                            }}>
-                                <Text style={{ color: "black", margin: 10, textAlign: "center" }}>Pas encore inscrit ? <Text style={{ color: "blue" }}>Inscription ici !</Text></Text>
-                            </Pressable>
+
+                            <FingerPrint handleSuccess={() => {
+                                auth()
+                                    .signInWithEmailAndPassword(userEmail, userPassword)
+                                    .then(userAuth => {
+
+                                        isLoggedIn !== STACKCHOICE.LOGGED && setIsLoggedIn(STACKCHOICE.LOGGED)
+
+                                        navigation.navigate("UserHome", { email: userEmail, userUid: userAuth.user.uid })
+                                    })
+                                    .catch(error => {
+                                        console.error(error)
+                                    })
+                            }} />
                         </View>
+
+                        <Pressable onPress={() => {
+                            console.log("Go to registration")
+                            navigation.navigate("Registration")
+                        }}>
+                            <Text style={{ color: "black", margin: 10, textAlign: "center" }}>Pas encore inscrit ? <Text style={{ color: "blue" }}>Inscription ici !</Text></Text>
+                        </Pressable>
                     </View>
                 )}
             </Formik>
@@ -135,7 +133,8 @@ const styles = StyleSheet.create({
 
     btnContainer: {
         justifyContent: "center",
-        marginVertical: 15
+        flexDirection: "row",
+        alignItems: "center"
     },
 
     register: {

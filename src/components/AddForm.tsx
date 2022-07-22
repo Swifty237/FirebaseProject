@@ -5,6 +5,7 @@ import { Formik } from "formik"
 import Btn from "../components/Btn"
 import { addDocumentId } from "../utils/functions"
 import firestore from "@react-native-firebase/firestore"
+import { RadioButton } from "react-native-paper"
 
 
 type AddFormType = {
@@ -16,6 +17,7 @@ type AddFormType = {
 }
 
 const AddForm: React.FunctionComponent<AddFormType> = ({ userID, addModalVisible, getAddModalVisible, addFormRefresh, getAddFormRefresh }) => {
+    const [checked, setChecked] = React.useState("Mobile")
 
     return (
         <Formik
@@ -78,14 +80,27 @@ const AddForm: React.FunctionComponent<AddFormType> = ({ userID, addModalVisible
                                 error={errors.password}
                             />
 
-                            <Input
+                            <View>
+                                <RadioButton
+                                    value="Mobile"
+                                    status={checked === "Mobile" ? "checked" : "unchecked"}
+                                    onPress={() => setChecked("Mobile")}
+                                />
+                                <RadioButton
+                                    value="Web"
+                                    status={checked === "Web" ? "checked" : "unchecked"}
+                                    onPress={() => setChecked("Web")}
+                                />
+                            </View>
+
+                            {/* <Input
                                 label="Type"
                                 placeholder="Entrez le type d'application"
                                 value={values.type}
                                 onChangeText={handleChange("type")}
                                 onBlur={() => handleBlur("type")}
                                 error={errors.type}
-                            />
+                            /> */}
                         </ScrollView>
 
                         <View style={styles.btnContainer}>

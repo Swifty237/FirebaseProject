@@ -23,7 +23,7 @@ const Password: React.FunctionComponent<InputProps> = ({ value }) => {
 
                 <TouchableOpacity style={{ justifyContent: "center" }} onPress={() => setEyeOff(!eyeOff)}>
                     <Text>
-                        <Icon name={eyeOff ? "eye-off" : "eye"} size={25} color="grey" />
+                        <Icon name={eyeOff ? "eye-off" : "eye"} size={25} color="#2c3e50" />
                     </Text>
                 </TouchableOpacity>
             </View>
@@ -40,8 +40,8 @@ const styles = StyleSheet.create({
 
     inputContainer: {
         flexDirection: "row",
-        borderWidth: 1,
-        borderColor: "grey",
+        borderWidth: 2,
+        borderColor: "#2c3e50",
         borderRadius: 5,
         justifyContent: "space-between"
     },

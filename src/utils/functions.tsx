@@ -2,6 +2,7 @@ import React from "react"
 import firestore from "@react-native-firebase/firestore"
 
 
+
 export const deleteDocument = (item: string): void => {
     console.log("=> deleteDocument (function)")
 
